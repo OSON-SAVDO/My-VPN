@@ -3,6 +3,8 @@ import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta
+from threading import Thread  # 👈 Барои сервери Flask лозим аст
+from flask import Flask        # 👈 Барои фиреб додани Render лозим аст
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -20,6 +22,22 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
+# ---- 🚀 ВЕБ-СЕРВЕР БАРОИ ХОСТИНИГИ RENDER ----
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Бот бо муваффақият кор карда истодааст!"
+
+def run_flask():
+    # Render худаш автоматӣ портро мехонад
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run_flask)
+    t.start()
+
 class BotStates(StatesGroup):
     waiting_for_contact = State()
     waiting_for_receipt = State()
@@ -28,7 +46,6 @@ class BotStates(StatesGroup):
 def init_db():
     conn = sqlite3.connect('vpn_bot.db')
     cursor = conn.cursor()
-    # Сохтани ҷадвал бо ҳамаи колонкаҳо якбора
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
@@ -276,6 +293,7 @@ async def check_subscriptions_loop():
 
 async def main():
     init_db()
+    keep_alive()  # 👈 Рӯшан кардани веб-сервер пеш аз шурӯи бот
     asyncio.create_task(check_subscriptions_loop())
     await dp.start_polling(bot)
 
