@@ -12,9 +12,9 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 # ⚠️ ТАНЗИМОТИ АСОСӢ
 API_TOKEN = '8560757080:AAE3a7-R5hml1tp9W8aOkjVHlBkhd_5HlZo'
 ADMIN_ID = 5863448768  # 👈 ИД-и Телеграми худро гузоред
-CARD_NUMBER = "4444"  # 👈 Рақами корт
-BANK_NAME = "Алиф Банк (Корти Миллӣ)"
-SUPPORT_LINK = "@your_admin_username"
+CARD_NUMBER = "4444888812573909"  # 👈 Рақами корт
+BANK_NAME = "Алиф Банк"
+SUPPORT_LINK = "@Saiddzodaa"
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
@@ -120,7 +120,7 @@ def get_main_menu(user_id):
     buttons = []
     if not user or user[2] == 0:
         buttons.append([InlineKeyboardButton(text="🎁 Оғози ройгон (Тест 24 соат)", callback_data="get_free_test")])
-    buy_text = "🔄 Дароз кардани обуна (25 сомонӣ) 🔥" if user and user[0] == 'active' else "💳 Хариди Обуна (30 сомонӣ)"
+    buy_text = "🔄 Дароз кардани обуна (25 сомонӣ) 🔥" if user and user[0] == 'active' else "💳 Хариди Обуна ( 120 рубл)"
     buttons.append([InlineKeyboardButton(text=buy_text, callback_data="choose_country")])
     buttons.append([InlineKeyboardButton(text="📊 Профили ман", callback_data="my_profile"),
                     InlineKeyboardButton(text="📚 Дастурамал", callback_data="instruction")])
@@ -139,7 +139,7 @@ async def send_welcome(message: types.Message, state: FSMContext):
         ], resize_keyboard=True, one_time_keyboard=True)
         await state.set_state(BotStates.waiting_for_contact)
         await message.answer(
-            "👋 Салом! Ба боти замониавии фурӯши VPN хуш омадед.\n\n"
+            "👋 Салом! Ба боти VPN 2Raytun хуш омадед.\n\n"
             "⚠️ *Барои истифодабарии бот, лутфан аввал рақами телефони худро тавассути тугмаи зерин тасдиқ кунед:*",
             parse_mode="Markdown", reply_markup=contact_keyboard
         )
@@ -190,7 +190,7 @@ async def process_payment_instruction(callback_query: types.CallbackQuery, state
     if callback_query.data == "pay_tj":
         pay_text = f"💰 *Нарх:* {price} сомонӣ\n\n💳 *Реквизитҳо барои Тоҷикистон:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар барнома пулро гузаронед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
     else:
-        pay_text = f"💰 *Нарх:* {price} сомонӣ (бо рубл)\n\n💳 *Реквизитҳо барои Русия:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар Сбербанк ё Т-Банк ба бахши Переводы за рубеж равед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
+        pay_text = f"💰 *Нарх:* {price} сомонӣ (бо рубл)\n\n💳 *Реквизитҳо барои Русия:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар Сбербанк ё Т-Банк ба бахши Переводы Таджикистана по карта равед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
     await bot.send_message(user_id, pay_text, parse_mode="Markdown", reply_markup=pay_keyboard)
 
 @dp.callback_query(F.data == "send_receipt_now")
