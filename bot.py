@@ -137,7 +137,7 @@ def get_main_menu(user_id):
     buttons = []
     if not user or user[2] == 0:
         buttons.append([InlineKeyboardButton(text="🎁 Оғози ройгон (Тест 24 соат)", callback_data="get_free_test")])
-    buy_text = "🔄 Дароз кардани обуна (25 сомонӣ) 🔥" if user and user[0] == 'active' else "💳 Хариди Обуна ( 120 рубл)"
+    buy_text = "🔄 Дароз кардани обуна ( 80 рубл )🔥" if user and user[0] == 'active' else "💳 Хариди Обуна ( 120 рубл)"
     buttons.append([InlineKeyboardButton(text=buy_text, callback_data="choose_country")])
     buttons.append([InlineKeyboardButton(text="📊 Профили ман", callback_data="my_profile"),
                     InlineKeyboardButton(text="📚 Дастурамал", callback_data="instruction")])
