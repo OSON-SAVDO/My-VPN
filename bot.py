@@ -12,7 +12,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 # ⚠️ ТАНЗИМОТИ АСОСӢ
-API_TOKEN = '8560757080:AAE3a7-R5hml1tp9W8aOkjVHlBkhd_5HlZo'
+API_TOKEN = '8877992551:AAGfxb2TCk1kYGdKX3w_ty-HkGZtbxivsjY'
 ADMIN_ID = 5863448768  # 👈 ИД-и Телеграми худро гузоред
 CARD_NUMBER = "4444888812573909"  # 👈 Рақами корт
 BANK_NAME = "Алиф Банк"
