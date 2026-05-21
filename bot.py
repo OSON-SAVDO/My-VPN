@@ -30,7 +30,6 @@ def home():
     return "Бот бо муваффақият кор карда истодааст!"
 
 def run_flask():
-    # Render худаш автоматӣ портро мехонад
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
@@ -94,9 +93,10 @@ def activate_test_db(user_id, username):
 def add_or_extend_subscription(user_id, days=30):
     conn = sqlite3.connect('vpn_bot.db')
     cursor = conn.cursor()
-    user = get_user_data(user_id)
+    user = get_user_data(user_id) # ТАРТИБИ ЭЛЕМЕНТҲО: 0=status, 1=expire_date, 2=has_used_test, 3=phone
     now = datetime.now()
-    if user and user[1]:
+    
+    if user and user[1]: # Агар вақти обунаи кӯҳна мавҷуд бошад
         try:
             current_expire = datetime.strptime(user[1], '%Y-%m-%d %H:%M:%S')
             if current_expire > now:
@@ -107,20 +107,37 @@ def add_or_extend_subscription(user_id, days=30):
             new_expire = now + timedelta(days=days)
     else:
         new_expire = now + timedelta(days=days)
+        
     new_expire_str = new_expire.strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute('UPDATE users SET status="active", expire_date=? WHERE user_id=?', (new_expire_str, user_id))
     conn.commit()
     conn.close()
 
-def get_one_vpn_key():
-    file_name = "keys.txt"
-    if not os.path.exists(file_name) or os.path.getsize(file_name) == 0: return None
+# 🛠️ ИСЛОҲШУДА: Функсияи гирифтани калид вобаста аз намуди обуна
+def get_one_vpn_key(key_type="premium"):
+    """
+    key_type метавонад 'test' ё 'premium' бошад.
+    Вобаста ба ин калидҳоро аз файлҳои гуногун мехонад ва нест мекунад.
+    """
+    if key_type == "test":
+        file_name = "test_keys.txt"
+    else:
+        file_name = "premium_keys.txt"
+        
+    if not os.path.exists(file_name) or os.path.getsize(file_name) == 0: 
+        return None
+        
     with open(file_name, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    if not lines: return None
+        
+    if not lines: 
+        return None
+        
     chosen_key = lines[0].strip()
+    
     with open(file_name, "w", encoding="utf-8") as f:
         f.writelines(lines[1:])
+        
     return chosen_key
 
 def get_time_left_text(expire_date_str):
@@ -135,6 +152,7 @@ def get_time_left_text(expire_date_str):
 def get_main_menu(user_id):
     user = get_user_data(user_id)
     buttons = []
+    # Тартиби элементҳо дар функсияи get_user_data: index 2 ин has_used_test аст
     if not user or user[2] == 0:
         buttons.append([InlineKeyboardButton(text="🎁 Оғози ройгон (Тест 24 соат)", callback_data="get_free_test")])
     buy_text = "🔄 Дароз кардани обуна ( 80 рубл )🔥" if user and user[0] == 'active' else "💳 Хариди Обуна ( 120 рубл)"
@@ -148,7 +166,7 @@ def get_main_menu(user_id):
 async def send_welcome(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     user = get_user_data(user_id)
-    if user and user[3]:
+    if user and user[3]: # Агар рақами телефон аллакай сабт бошад
         await message.answer("👋 Хуш омадед ба боти VPN! Боз ба кор шурӯъ мекунем:", reply_markup=get_main_menu(user_id))
     else:
         contact_keyboard = ReplyKeyboardMarkup(keyboard=[
@@ -177,10 +195,13 @@ async def process_free_test(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     username = callback_query.from_user.username or "user"
     user = get_user_data(user_id)
+    
     if user and user[2] == 1:
         await bot.send_message(user_id, "❌ Шумо аллакай замони тестро истифода бурдед.")
         return
-    vpn_key = get_one_vpn_key()
+        
+    # 🛠️ ИСЛОҲШУДА: Калиди тестро аз файли тестӣ мехонем
+    vpn_key = get_one_vpn_key(key_type="test")
     if vpn_key:
         activate_test_db(user_id, username)
         await bot.send_message(user_id, f"🎉 *Калиди тези шумо барои 24 соат фаъол шуд!*\n\n🔑 Линки VPN:\n`{vpn_key}`", parse_mode="Markdown", reply_markup=get_main_menu(user_id))
@@ -202,12 +223,12 @@ async def process_payment_instruction(callback_query: types.CallbackQuery, state
     await callback_query.answer()
     user_id = callback_query.from_user.id
     user = get_user_data(user_id)
-    price = 25 if user and user[0] == 'active' else 30
+    price = 80 if user and user[0] == 'active' else 120
     pay_keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📸 Фиристодани Чек", callback_data="send_receipt_now")]])
     if callback_query.data == "pay_tj":
-        pay_text = f"💰 *Нарх:* {price} сомонӣ\n\n💳 *Реквизитҳо барои Тоҷикистон:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар барнома пулро гузаронед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
+        pay_text = f"💰 *Нарх:* {price} рубл\n\n💳 *Реквизитҳо барои Тоҷикистон:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Корткуниро нусха кунед.\n2️⃣ Дар барнома пулро гузаронед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
     else:
-        pay_text = f"💰 *Нарх:* {price} сомонӣ (бо рубл)\n\n💳 *Реквизитҳо барои Русия:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар Сбербанк ё Т-Банк ба бахши Переводы Таджикистана по карта равед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
+        pay_text = f"💰 *Нарх:* {price} рубл\n\n💳 *Реквизитҳо барои Русия:*\n📌 Бонк: {BANK_NAME}\n🔢 Корт: `{CARD_NUMBER}`\n\nℹ️ *Дастур:*\n1️⃣ Кортро нусха кунед.\n2️⃣ Дар Сбербанк ё Т-Банк ба бахши Переводы Таджикистана по карта равед.\n3️⃣ Тугмаи *'Фиристодани Чек'*-ро пахш кунед."
     await bot.send_message(user_id, pay_text, parse_mode="Markdown", reply_markup=pay_keyboard)
 
 @dp.callback_query(F.data == "send_receipt_now")
@@ -237,16 +258,22 @@ async def admin_decision(callback_query: types.CallbackQuery):
     data = callback_query.data.split("_")
     action = data[1]
     client_id = int(data[2])
+    
     if action == "yes":
         user = get_user_data(client_id)
         add_or_extend_subscription(client_id, days=30)
+        
         if user and user[0] == 'active':
             await bot.send_message(client_id, "🎉 Обунаи шумо 30 рӯзи дигар дароз карда шуд!")
         else:
-            vpn_key = get_one_vpn_key()
-            if vpn_key: await bot.send_message(client_id, f"✅ Пардохт тасдиқ шуд! Линки худро пайваст кунед:\n`{vpn_key}`", parse_mode="Markdown")
-            else: await bot.send_message(client_id, "⚠️ Калидҳо тамом шудаанд. Админ ба зудӣ мефиристад.")
+            # 🛠️ ИСЛОҲШУДА: Калиди пулакиро аз файли premium мехонад
+            vpn_key = get_one_vpn_key(key_type="premium")
+            if vpn_key: 
+                await bot.send_message(client_id, f"✅ Пардохт тасдиқ шуд! Линки худро пайваст кунед:\n`{vpn_key}`", parse_mode="Markdown")
+            else: 
+                await bot.send_message(client_id, "⚠️ Калидҳои премиум тамом шудаанд. Админ ба зудӣ мефиристад.")
         await callback_query.message.edit_caption(caption=f"🟢 ТАСДИҚ ШУД (ID: {client_id})")
+        
     elif action == "no":
         await bot.send_message(client_id, "❌ Пардохти шумо тасдиқ нашуд.")
         await callback_query.message.edit_caption(caption=f"🔴 РАД ШУД (ID: {client_id})")
@@ -285,10 +312,13 @@ async def check_subscriptions_loop():
             for row in cursor.fetchall():
                 cursor.execute("UPDATE users SET status = 'inactive' WHERE user_id = ?", (row[0],))
                 conn.commit()
-                try: await bot.send_message(row[0], "🚨 Мӯҳлати обунаи VPN-и шумо ба охир расид! Лутфан онро харидорӣ кунед.")
-                except Exception: pass
+                try: 
+                    await bot.send_message(row[0], "🚨 Мӯҳлати обунаи VPN-и шумо ба охир расид! Лутфан онро харидорӣ кунед.")
+                except Exception: 
+                    pass
             conn.close()
-        except Exception as e: logging.error(f"Error in loop: {e}")
+        except Exception as e: 
+            logging.error(f"Error in loop: {e}")
         await asyncio.sleep(1800)
 
 async def main():
